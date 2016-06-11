@@ -25,13 +25,15 @@ SHT1x::SHT1x(int dataPin, int clockPin)
 {
   _dataPin = dataPin;
   _clockPin = clockPin;
+  _dataInputMode = INPUT;
   _setConversionCoeffs(DEFAULT_VOLTAGE);
 }
 
-SHT1x::SHT1x(int dataPin, int clockPin, float voltage)
+SHT1x::SHT1x(int dataPin, int clockPin, float voltage, bool intPullup=false)
 {
   _dataPin = dataPin;
   _clockPin = clockPin;
+  _dataInputMode = (intPullup ? INPUT_PULLUP : INPUT);
   _setConversionCoeffs(voltage);
 }
 
@@ -203,7 +205,7 @@ void SHT1x::sendCommandSHT(int _command, int _dataPin, int _clockPin)
 
   // Verify we get the correct ack
   digitalWrite(_clockPin, HIGH);
-  pinMode(_dataPin, INPUT);
+  pinMode(_dataPin, _dataInputMode);
   ack = digitalRead(_dataPin);
 
   digitalWrite(_clockPin, LOW);
@@ -214,7 +216,7 @@ void SHT1x::sendCommandSHT(int _command, int _dataPin, int _clockPin)
  */
 void SHT1x::waitForResultSHT(int _dataPin)
 {
-  pinMode(_dataPin, INPUT);
+  pinMode(_dataPin, _dataInputMode);
  
   unsigned long int start = millis();
   
@@ -229,7 +231,7 @@ int SHT1x::getData16SHT(int _dataPin, int _clockPin)
   int val;
 
   // Get the most significant bits
-  pinMode(_dataPin, INPUT);
+  pinMode(_dataPin, _dataInputMode);
   pinMode(_clockPin, OUTPUT);
   val = shiftIn(_dataPin, _clockPin, 8);
   val *= 256;
@@ -242,7 +244,7 @@ int SHT1x::getData16SHT(int _dataPin, int _clockPin)
   digitalWrite(_clockPin, LOW);
 
   // Get the least significant bits
-  pinMode(_dataPin, INPUT);
+  pinMode(_dataPin, _dataInputMode);
   val |= shiftIn(_dataPin, _clockPin, 8);
 
   return val;

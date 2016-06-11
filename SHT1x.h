@@ -24,7 +24,7 @@ class SHT1x
 {
   public:
     SHT1x(int dataPin, int clockPin);
-    SHT1x(int dataPin, int clockPin, float voltage);
+    SHT1x(int dataPin, int clockPin, float voltage, bool intPullup=false);
     //composite functions
     float readHumidity();
     float readTemperatureC();
@@ -41,6 +41,7 @@ class SHT1x
     int _temperatureRaw;
     int _dataPin;
     int _clockPin;
+    int _dataInputMode;
     uint8_t shiftIn(int _dataPin, int _clockPin, int _numBits);
     int _numBits;
     float _D1C; float _D1F; float _D2C; float _D2F;
