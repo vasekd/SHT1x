@@ -21,13 +21,14 @@
 class SHT1x
 {
   public:
-    SHT1x(int dataPin, int clockPin);
+    SHT1x(int dataPin, int clockPin, bool intPullup=false);
     float readHumidity();
     float readTemperatureC();
     float readTemperatureF();
   private:
     int _dataPin;
     int _clockPin;
+    int _dataInputMode;
     int _numBits;
     float readTemperatureRaw();
     int shiftIn(int _dataPin, int _clockPin, int _numBits);
