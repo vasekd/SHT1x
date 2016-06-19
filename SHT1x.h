@@ -57,10 +57,10 @@ class SHT1x
     float _linearInterpolation(float coeffA, float coeffB, float valB, float input);
     void _setConversionCoeffs(float voltage);
 
-    void sendCommandSHT(uint8_t _command, int _dataPin, int _clockPin);
-    void waitForResultSHT(int _dataPin);
-    int getDataSHT(int _dataPin, int _clockPin, int bits);
-    void skipCrcSHT(int _dataPin, int _clockPin);
+    void sendCommandSHT(uint8_t _command);
+    void waitForResultSHT();
+    int getDataSHT(int bits);
+    void skipCrcSHT();
     bool checkCrcSHT(uint8_t cmd, uint16_t data, int datalen);
     uint8_t crc8(uint8_t data, uint8_t startval);
 };

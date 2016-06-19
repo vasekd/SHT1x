@@ -79,7 +79,7 @@ void SHT1x::reset()
     digitalWrite(_clockPin, HIGH);
     digitalWrite(_clockPin, LOW);
   }
-  sendCommandSHT(SHT1X_CMD_SOFT_RESET, _dataPin, _clockPin);
+  sendCommandSHT(SHT1X_CMD_SOFT_RESET);
   delay(11);
   pinMode(_dataPin, _dataInputMode);
 }
@@ -121,7 +121,7 @@ float SHT1x::parseTemperatureF(int raw){
 void SHT1x::requestTemperature()
 {
   int _val;
-  sendCommandSHT(SHT1X_CMD_MEASURE_TEMP, _dataPin, _clockPin);
+  sendCommandSHT(SHT1X_CMD_MEASURE_TEMP);
 }
 
 /**
@@ -129,8 +129,8 @@ void SHT1x::requestTemperature()
  */
 int SHT1x::readInTemperature()
 {
-  waitForResultSHT(_dataPin);
-  uint16_t rawTemp = getDataSHT(_dataPin, _clockPin, 16);
+  waitForResultSHT();
+  uint16_t rawTemp = getDataSHT(16);
   if (checkCrcSHT(SHT1X_CMD_MEASURE_TEMP, rawTemp, 2)) {
     _temperatureRaw = rawTemp;  // store in variable for humidity
     return _temperatureRaw;
@@ -152,13 +152,13 @@ float SHT1x::readHumidity()
 
 void SHT1x::requestHumidity(){
   // Fetch the value from the sensor
-  sendCommandSHT(SHT1X_CMD_MEASURE_RH, _dataPin, _clockPin);
+  sendCommandSHT(SHT1X_CMD_MEASURE_RH);
 }
 
 float SHT1x::readInHumidity(){
   int val;                    // Raw humidity value returned from sensor
-  waitForResultSHT(_dataPin);
-  val = getDataSHT(_dataPin, _clockPin, 16);
+  waitForResultSHT();
+  val = getDataSHT(16);
   if (checkCrcSHT(SHT1X_CMD_MEASURE_RH, val, 2)) {
     return val;
   }
@@ -193,8 +193,8 @@ float SHT1x::parseHumidity(int raw){
 
 uint8_t SHT1x::readStatus() {
   uint8_t status;
-  sendCommandSHT(SHT1X_CMD_READ_STATUS, _dataPin, _clockPin);
-  status = getDataSHT(_dataPin, _clockPin, 8);
+  sendCommandSHT(SHT1X_CMD_READ_STATUS);
+  status = getDataSHT(8);
   if (checkCrcSHT(SHT1X_CMD_READ_STATUS, status, 1)) {
     _status = status; // Store for use in CRC calculations
     return _status;
@@ -206,7 +206,7 @@ uint8_t SHT1x::readStatus() {
 
 /**
  */
-void SHT1x::sendCommandSHT(uint8_t _command, int _dataPin, int _clockPin)
+void SHT1x::sendCommandSHT(uint8_t _command)
 {
   // Transmission Start
   pinMode(_dataPin, OUTPUT);
@@ -241,7 +241,7 @@ void SHT1x::sendCommandSHT(uint8_t _command, int _dataPin, int _clockPin)
 
 /**
  */
-void SHT1x::waitForResultSHT(int _dataPin)
+void SHT1x::waitForResultSHT()
 {
   pinMode(_dataPin, _dataInputMode);
  
@@ -253,7 +253,7 @@ void SHT1x::waitForResultSHT(int _dataPin)
 
 /**
  */
-int SHT1x::getDataSHT(int _dataPin, int _clockPin, const int bits=16)
+int SHT1x::getDataSHT(const int bits=16)
 {
   int val = 0;
 
@@ -284,7 +284,7 @@ int SHT1x::getDataSHT(int _dataPin, int _clockPin, const int bits=16)
 
 /**
  */
-void SHT1x::skipCrcSHT(int _dataPin, int _clockPin)
+void SHT1x::skipCrcSHT()
 {
   // Skip acknowledge to end trans (no CRC)
   pinMode(_dataPin, OUTPUT);
