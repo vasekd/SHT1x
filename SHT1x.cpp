@@ -68,6 +68,22 @@ float SHT1x::_linearInterpolation(float coeffA, float coeffB, float valA, float 
 
 /* ================  Public methods ================ */
 
+/* Resets the sensor, e.g. after communication desync
+ */
+void SHT1x::reset()
+{
+  pinMode(_clockPin, OUTPUT);
+  pinMode(_dataPin, OUTPUT);
+  delay(11);
+  for (int i=0; i<9; i++) {
+    digitalWrite(_clockPin, HIGH);
+    digitalWrite(_clockPin, LOW);
+  }
+  sendCommandSHT(SHT1X_CMD_SOFT_RESET, _dataPin, _clockPin);
+  delay(11);
+  pinMode(_dataPin, _dataInputMode);
+}
+
 /**
  * Requests, reads, and parses temperatures in C
  */
