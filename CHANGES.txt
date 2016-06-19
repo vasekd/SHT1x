@@ -1,3 +1,8 @@
+2016-06-19
+ * Verify data transfer integrity with CRC checks
+ * Add readStatus() and reset()
+ * Code cleanups
+
 2013-06-11
  *  	-decoupled requests, read in, and parsing
  *	-adjusted temperature for voltage

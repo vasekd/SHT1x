@@ -1,5 +1,8 @@
 SHT1x Temperature / Humidity Sensor Library for Arduino
 =======================================================
+
+Copyright 2016 Mark Bergsma mark@nedworks.org
+
 Additional work done by Louis Thiery (me@louisthiery.com) - hoping to see GNU or CC copyright emerge
 
 Copyright 2009 Jonathan Oxer jon@oxer.com.au / http://www.practicalarduino.com  
@@ -35,11 +38,17 @@ example we created an object called "sht1x", but it could have been
 called whatever you like. A complete example program is included with
 the library and can be accessed from the File->Examples->SHT1x menu.
 
+Extra constructor arguments can be passed to support different voltages
+than the default 5V, or to use the internal pin pullup instead of an
+external resistor:
+
+    SHT1x sht1x(dataPin, clockPin, 3.3, true);
+
 ### readTemperatureC() ###
 
 Returns a float within the valid range of the sensor of -40 to +123.8C.
-A value of -40 is returned in the event of a communication error with
-the sensor.
+A value of NAN is returned in the event of a communication (CRC) error
+with the sensor.
 
 Example:
 
@@ -48,8 +57,8 @@ Example:
 ### readTemperatureF() ###
 
 Returns a float within the valid range of the sensor of -40 to +254.9F.
-A value of -40 is returned in the event of a communication error with
-the sensor.
+A value of NAN is returned in the event of a communication (CRC) error
+with the sensor.
 
 Example:
 
@@ -64,3 +73,14 @@ the sensor.
 Example:
 
     float humidity = sht1x.readHumidity();
+
+### readStatus() ###
+
+Returns the contents of the sensor's 8-bit status register (see the
+datasheet for details). Can also be used to test whether the sensor
+is connected and working at all; it returns 0xFF if the sensor isn't
+responding properly, resulting in a CRC error.
+
+### reset() ###
+
+(Re)initializes the sensor to its defaults.
