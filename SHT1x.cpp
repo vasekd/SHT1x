@@ -49,26 +49,27 @@ void SHT1x::_setConversionCoeffs(float voltage){
   
   const float coeffsC[] = {40.1,39.8,39.7,39.6,39.4};
   const float coeffsF[] = {40.2,39.6,39.5,39.3,38.9};
-  const float vals[]={5,4,3.5,3,2.5};
+  const float vals[] = {5,4,3.5,3,2.5};
   
-  for (int i=1;i<VALS_IN_TABLE;i++){
-	if(voltage>vals[i]){
-		_D1C=-_linearInterpolation(coeffsC[i-1],coeffsC[i],vals[i-1],voltage);
-		_D1F=-_linearInterpolation(coeffsF[i-1],coeffsF[i],vals[i-1],voltage);
-		break;
-	}
+  for (int i=1; i<VALS_IN_TABLE; i++) {
+  	if (voltage > vals[i]) {
+  		_D1C = -_linearInterpolation(coeffsC[i-1], coeffsC[i], vals[i-1], voltage);
+  		_D1F = -_linearInterpolation(coeffsF[i-1], coeffsF[i], vals[i-1], voltage);
+  		break;
+  	}
   }
 }
 
-float SHT1x::_linearInterpolation(float coeffA, float coeffB, float valA, float input){
-        Serial.println((coeffA-coeffB)/valA*input+coeffB);
-	return (coeffA-coeffB)/valA*input+coeffB;
+float SHT1x::_linearInterpolation(float coeffA, float coeffB, float valA, float input) {
+  Serial.println((coeffA-coeffB)/valA*input+coeffB);
+  return (coeffA-coeffB)/valA*input+coeffB;
 }
 
 
 /* ================  Public methods ================ */
 
-/* Resets the sensor, e.g. after communication desync
+/**
+ * Resets the sensor, e.g. after communication desync
  */
 void SHT1x::reset()
 {
@@ -120,7 +121,6 @@ float SHT1x::parseTemperatureF(int raw){
  */
 void SHT1x::requestTemperature()
 {
-  int _val;
   sendCommandSHT(SHT1X_CMD_MEASURE_TEMP);
 }
 
@@ -247,7 +247,7 @@ void SHT1x::waitForResultSHT()
  
   unsigned long int start = millis();
   
-  //wait for SHT to show that its ready or move along it timeout is reached
+  // Wait for SHT to show that it's ready or move along if timeout is reached
   while( digitalRead(_dataPin) && (millis()-start)<TIMEOUT_MILLIS );
 }
 
