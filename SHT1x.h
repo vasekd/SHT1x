@@ -20,6 +20,13 @@
 
 #define TIMEOUT_MILLIS 1000
 
+enum {
+  SHT1X_CMD_MEASURE_TEMP  = B00000011,
+  SHT1X_CMD_MEASURE_RH    = B00000101,
+  SHT1X_CMD_READ_STATUS   = B00000111,
+  SHT1X_CMD_SOFT_RESET    = B00011110
+};
+
 class SHT1x
 {
   public:
@@ -42,16 +49,18 @@ class SHT1x
     int _dataPin;
     int _clockPin;
     int _dataInputMode;
+    uint8_t _status;
     int _numBits;
     float _D1C; float _D1F; float _D2C; float _D2F;
     float _linearInterpolation(float coeffA, float coeffB, float valB, float input);
     void _setConversionCoeffs(float voltage);
 
-    void sendCommandSHT(int _command, int _dataPin, int _clockPin);
+    void sendCommandSHT(uint8_t _command, int _dataPin, int _clockPin);
     void waitForResultSHT(int _dataPin);
-    int getData16SHT(int _dataPin, int _clockPin);
+    int getDataSHT(int _dataPin, int _clockPin, int bits);
     void skipCrcSHT(int _dataPin, int _clockPin);
-
+    bool checkCrcSHT(uint8_t cmd, uint16_t data, int datalen);
+    uint8_t crc8(uint8_t data, uint8_t startval);
 };
 
 #endif

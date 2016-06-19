@@ -27,6 +27,7 @@ SHT1x::SHT1x(int dataPin, int clockPin)
   _clockPin = clockPin;
   _dataInputMode = INPUT;
   _setConversionCoeffs(DEFAULT_VOLTAGE);
+  _status = 0;
 }
 
 SHT1x::SHT1x(int dataPin, int clockPin, float voltage, bool intPullup=false)
@@ -35,6 +36,7 @@ SHT1x::SHT1x(int dataPin, int clockPin, float voltage, bool intPullup=false)
   _clockPin = clockPin;
   _dataInputMode = (intPullup ? INPUT_PULLUP : INPUT);
   _setConversionCoeffs(voltage);
+  _status = 0;
 }
 
 #define VALS_IN_TABLE 5
@@ -73,7 +75,8 @@ float SHT1x::readTemperatureC()
 {
   //just putting together functions
   requestTemperature();
-  return parseTemperatureC(readInTemperature());
+  int raw = readInTemperature();
+  return (raw >= 0) ? parseTemperatureC(raw) : NAN;
 }
 
 float SHT1x::parseTemperatureC(int raw){
@@ -87,7 +90,8 @@ float SHT1x::parseTemperatureC(int raw){
 float SHT1x::readTemperatureF()
 {
   requestTemperature();
-  return parseTemperatureF(readInTemperature());
+  int raw = readInTemperature();
+  return (raw >= 0) ? parseTemperatureF(raw) : NAN;
 }
 
 float SHT1x::parseTemperatureF(int raw){
@@ -101,9 +105,7 @@ float SHT1x::parseTemperatureF(int raw){
 void SHT1x::requestTemperature()
 {
   int _val;
-  // Command to send to the SHT1x to request Temperature
-  int _gTempCmd  = 0b00000011;
-  sendCommandSHT(_gTempCmd, _dataPin, _clockPin);
+  sendCommandSHT(SHT1X_CMD_MEASURE_TEMP, _dataPin, _clockPin);
 }
 
 /**
@@ -112,10 +114,14 @@ void SHT1x::requestTemperature()
 int SHT1x::readInTemperature()
 {
   waitForResultSHT(_dataPin);
-
-  _temperatureRaw= getData16SHT(_dataPin, _clockPin); //store in variable for humidity 
-  skipCrcSHT(_dataPin, _clockPin);
-  return _temperatureRaw;
+  uint16_t rawTemp = getDataSHT(_dataPin, _clockPin, 16);
+  if (checkCrcSHT(SHT1X_CMD_MEASURE_TEMP, rawTemp, 2)) {
+    _temperatureRaw = rawTemp;  // store in variable for humidity
+    return _temperatureRaw;
+  }
+  else {
+    return -1;
+  }
 }
 
 /**
@@ -124,24 +130,25 @@ int SHT1x::readInTemperature()
 float SHT1x::readHumidity()
 {
   requestHumidity();
-  return parseHumidity(readInHumidity());
+  float raw = readInHumidity();
+  return (raw >= 0) ? parseHumidity(raw) : NAN;
 }
 
 void SHT1x::requestHumidity(){
-
-  // Command to send to the SHT1x to request humidity
-  int _gHumidCmd = 0b00000101;
-
   // Fetch the value from the sensor
-  sendCommandSHT(_gHumidCmd, _dataPin, _clockPin);
+  sendCommandSHT(SHT1X_CMD_MEASURE_RH, _dataPin, _clockPin);
 }
 
 float SHT1x::readInHumidity(){
   int val;                    // Raw humidity value returned from sensor
   waitForResultSHT(_dataPin);
-  val = getData16SHT(_dataPin, _clockPin);
-  skipCrcSHT(_dataPin, _clockPin);
-  return val;
+  val = getDataSHT(_dataPin, _clockPin, 16);
+  if (checkCrcSHT(SHT1X_CMD_MEASURE_RH, val, 2)) {
+    return val;
+  }
+  else {
+    return -1;
+  }
 }
 
 float SHT1x::parseHumidity(int raw){
@@ -170,10 +177,8 @@ float SHT1x::parseHumidity(int raw){
 
 /**
  */
-void SHT1x::sendCommandSHT(int _command, int _dataPin, int _clockPin)
+void SHT1x::sendCommandSHT(uint8_t _command, int _dataPin, int _clockPin)
 {
-  int ack;
-
   // Transmission Start
   pinMode(_dataPin, OUTPUT);
   pinMode(_clockPin, OUTPUT);
@@ -188,13 +193,21 @@ void SHT1x::sendCommandSHT(int _command, int _dataPin, int _clockPin)
   // The command (3 msb are address and must be 000, and last 5 bits are command)
   shiftOut(_dataPin, _clockPin, MSBFIRST, _command);
 
-  // Verify we get the correct ack
-  digitalWrite(_clockPin, HIGH);
+  // Wait for ACK
+  bool ackerror = false;
   pinMode(_dataPin, _dataInputMode);
-  ack = digitalRead(_dataPin);
-
+  digitalWrite(_clockPin, HIGH);
+  if (digitalRead(_dataPin) != LOW) ackerror = true;
   digitalWrite(_clockPin, LOW);
-  ack = digitalRead(_dataPin);
+
+  if (_command == SHT1X_CMD_MEASURE_TEMP || _command == SHT1X_CMD_MEASURE_RH) {
+    delayMicroseconds(1); /* Give the sensor time to release the data line */
+    if (digitalRead(_dataPin) != HIGH) ackerror = true;
+  }
+
+  if (ackerror) {
+    Serial.println("SHT1x: Sensor did not ACK command");
+  }
 }
 
 /**
@@ -211,22 +224,27 @@ void SHT1x::waitForResultSHT(int _dataPin)
 
 /**
  */
-int SHT1x::getData16SHT(int _dataPin, int _clockPin)
+int SHT1x::getDataSHT(int _dataPin, int _clockPin, const int bits=16)
 {
-  int val;
+  int val = 0;
 
-  // Get the most significant bits
-  pinMode(_dataPin, _dataInputMode);
   pinMode(_clockPin, OUTPUT);
-  val = shiftIn(_dataPin, _clockPin, MSBFIRST);
-  val *= 256;
-
-  // Send the required ack
-  pinMode(_dataPin, OUTPUT);
-  digitalWrite(_dataPin, HIGH);
-  digitalWrite(_dataPin, LOW);
-  digitalWrite(_clockPin, HIGH);
   digitalWrite(_clockPin, LOW);
+
+  if (bits == 16) {
+    // Get the most significant bits
+    pinMode(_dataPin, _dataInputMode);
+    val = shiftIn(_dataPin, _clockPin, MSBFIRST);
+    val *= 256;
+
+    // Send the required ack
+    pinMode(_dataPin, OUTPUT);
+
+    //digitalWrite(_dataPin, HIGH);
+    digitalWrite(_dataPin, LOW);
+    digitalWrite(_clockPin, HIGH);
+    digitalWrite(_clockPin, LOW);
+  }
 
   // Get the least significant bits
   pinMode(_dataPin, _dataInputMode);
@@ -246,4 +264,46 @@ void SHT1x::skipCrcSHT(int _dataPin, int _clockPin)
   digitalWrite(_dataPin, HIGH);
   digitalWrite(_clockPin, HIGH);
   digitalWrite(_clockPin, LOW);
+}
+
+/**
+ */
+bool SHT1x::checkCrcSHT(const uint8_t cmd, const uint16_t data, const int datalen)
+{
+  // Pull data line low to ACK
+  pinMode(_dataPin, OUTPUT);
+  pinMode(_clockPin, OUTPUT);
+
+  digitalWrite(_dataPin, LOW);
+  digitalWrite(_clockPin, HIGH);
+  digitalWrite(_clockPin, LOW);
+
+  pinMode(_dataPin, _dataInputMode);
+  int crcVal = shiftIn(_dataPin, _clockPin, MSBFIRST);
+
+  pinMode(_dataPin, OUTPUT);
+  digitalWrite(_dataPin, HIGH);
+  digitalWrite(_clockPin, HIGH);
+  digitalWrite(_clockPin, LOW);
+  pinMode(_dataPin, _dataInputMode);
+
+  // Calculate CRC from status register, command and data
+  uint8_t crcCalc;
+  crcCalc = crc8(cmd, _status & 0xF);
+  if (datalen == 2) crcCalc = crc8((data >> 8) & 0xFF, crcCalc);
+  crcCalc = crc8(data & 0xFF, crcCalc);
+  return (crcVal == crcCalc);
+}
+
+uint8_t SHT1x::crc8(const uint8_t data, const uint8_t startval)
+{
+  /* Algorithm based on the Sensirion CRC8 calculation app note
+   * Note! variable crc is reversed compared to the app note
+   */
+  uint8_t crc = startval;
+
+  for (int i = 7; i >= 0; i--) {
+    crc = (((data >> i) & 1) == (crc & 1)) ? crc >> 1 : ((crc >> 1) ^ 0xC) | 0x80;
+  }
+  return crc;
 }
