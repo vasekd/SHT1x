@@ -175,6 +175,19 @@ float SHT1x::parseHumidity(int raw){
   return correctedHumidity;
 }
 
+uint8_t SHT1x::readStatus() {
+  uint8_t status;
+  sendCommandSHT(SHT1X_CMD_READ_STATUS, _dataPin, _clockPin);
+  status = getDataSHT(_dataPin, _clockPin, 8);
+  if (checkCrcSHT(SHT1X_CMD_READ_STATUS, status, 1)) {
+    _status = status; // Store for use in CRC calculations
+    return _status;
+  }
+  else {
+    return 0xFF;
+  }
+}
+
 /**
  */
 void SHT1x::sendCommandSHT(uint8_t _command, int _dataPin, int _clockPin)

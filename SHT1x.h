@@ -36,6 +36,7 @@ class SHT1x
     float readHumidity();
     float readTemperatureC();
     float readTemperatureF();
+    uint8_t readStatus();
     //decoupled functions
     void requestTemperature();
     int readInTemperature();
