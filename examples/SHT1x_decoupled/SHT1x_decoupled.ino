@@ -5,8 +5,10 @@
 #define CLOCK 3
 // voltage is optional, defaults to 5
 #define VOLTAGE 3.3
+// intpullup is optional, defaults to false
+#define INTPULLUP true
 
-SHT1x sht0(DATA, CLOCK, VOLTAGE);
+SHT1x sht0(DATA, CLOCK, VOLTAGE, INTPULLUP);
 
 void setup(){
   Serial.begin(57600);
