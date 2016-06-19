@@ -42,7 +42,6 @@ class SHT1x
     int _dataPin;
     int _clockPin;
     int _dataInputMode;
-    uint8_t shiftIn(int _dataPin, int _clockPin, int _numBits);
     int _numBits;
     float _D1C; float _D1F; float _D2C; float _D2F;
     float _linearInterpolation(float coeffA, float coeffB, float valB, float input);

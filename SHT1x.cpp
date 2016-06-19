@@ -170,21 +170,6 @@ float SHT1x::parseHumidity(int raw){
 
 /**
  */
-uint8_t SHT1x::shiftIn(int _dataPin, int _clockPin, int _numBits)
-{
-  int ret = 0;
-  int i;
-  for (i=0; i<_numBits; ++i)
-  {
-     digitalWrite(_clockPin, HIGH);
-     ret = ret*2 + digitalRead(_dataPin);
-     digitalWrite(_clockPin, LOW);
-  }
-  return(ret);
-}
-
-/**
- */
 void SHT1x::sendCommandSHT(int _command, int _dataPin, int _clockPin)
 {
   int ack;
@@ -233,7 +218,7 @@ int SHT1x::getData16SHT(int _dataPin, int _clockPin)
   // Get the most significant bits
   pinMode(_dataPin, _dataInputMode);
   pinMode(_clockPin, OUTPUT);
-  val = shiftIn(_dataPin, _clockPin, 8);
+  val = shiftIn(_dataPin, _clockPin, MSBFIRST);
   val *= 256;
 
   // Send the required ack
@@ -245,7 +230,7 @@ int SHT1x::getData16SHT(int _dataPin, int _clockPin)
 
   // Get the least significant bits
   pinMode(_dataPin, _dataInputMode);
-  val |= shiftIn(_dataPin, _clockPin, 8);
+  val |= shiftIn(_dataPin, _clockPin, MSBFIRST);
 
   return val;
 }
